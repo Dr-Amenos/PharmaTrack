@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaTrack - Recherche de Médicaments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS - Mise en forme générale */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(45deg, #ff6f61, #6a11cb, #ff6f61, #6a11cb);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 1s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            animation: textPopUpTop 1s ease-out, colorChange 4s infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            height: 200%;
+            width: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            animation: shine 2s infinite;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        @keyframes textPopUpTop {
+            0% { transform: translateY(50px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes colorChange {
+            0%, 100% { color: #333; }
+            50% { color: #ff6f61; }
+        }
+
+        @keyframes shine {
+            0% { left: -200%; }
+            50% { left: 50%; }
+            100% { left: 200%; }
+        }
+
+        input {
+            width: 80%;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 30px;
+            border: 2px solid #6a11cb;
+            font-size: 1.1em;
+            transition: all 0.3s ease-in-out;
+        }
+
+        input:focus {
+            border-color: #ff6f61;
+            outline: none;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 111, 97, 0.5);
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(90deg, #ff6f61, #6a11cb);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: scale(1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #6a11cb, #ff6f61);
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(255, 111, 97, 0.5);
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background: linear-gradient(90deg, #ff6f61, #ff6f61);
+        }
+
+        #result {
+            margin-top: 20px;
+            animation: fadeIn 1s ease-out;
+            max-height: 300px; /* Hauteur maximale avant d'activer le défilement */
+            overflow-y: auto; /* Activer le défilement vertical */
+            width: 100%; /* Assurez-vous que le conteneur prend toute la largeur */
+            padding-right: 10px; /* Espace pour éviter que le texte ne chevauche la barre de défilement */
+        }
+
+        .pharmacie {
+            background: linear-gradient(45deg, #ffffff, #f2f2f2);
+            color: #333;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: slideInFromBottom 0.5s ease-in-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pharmacie:hover {
+            transform: scale(1.05);
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .map-button {
+            padding: 10px 20px;
+            background: linear-gradient(90deg, #28a745, #218838);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .map-button:hover {
+            background-color: #218838;
+        }
+
+        .floating-circles {
+            position: absolute;
+            top: -150px;
+            right: -150px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 111, 97, 0.7);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite, rotate 10s linear infinite;
+            z-index: -1;
+        }
+
+        .floating-circles:nth-child(2) {
+            top: auto;
+            bottom: -150px;
+            right: auto;
+            left: -150px;
+            background: rgba(106, 17, 203, 0.7);
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(50px); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Suggestions de médicaments */
+        #suggestions {
+            margin-top: 10px;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            color: rgba(106, 17, 203, 0.8); /* Couleur du texte en violet semi-transparent */
+        }
+
+        .suggestion-item:hover {
+            background-color: rgba(255, 111, 97, 0.2); /* Fond semi-transparent au survol */
+            color: rgba(106, 17, 203, 1); /* Texte plus opaque au survol */
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInFromBottom {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            input { width: 90%; }
+            button { padding: 10px 25px; }
+        }
+
+        /* Particles Animation */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: -2;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles-js"></div>
+    <div class="container">
+        <div class="floating-circles"></div>
+        <div class="floating-circles"></div>
+        <h1>PharmaTrack</h1>
+        <input type="text" id="searchInput" placeholder="Entrez le nom du médicament...">
+        <div id="suggestions"></div>
+        <button onclick="rechercherMedicament()">Rechercher</button>
+        <div id="result"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Liste de médicaments pour les suggestions (à remplacer par une API ou une base de données)
+        const medicaments = [
+            "Paracétamol", "Ibuprofène", "Amoxicilline", "Doliprane", "Aspirine", "Voltarène", "Smecta", "Spasfon", "Efferalgan", "Levothyrox"
+        ];
+        const searchInput = document.getElementById("searchInput");
+        const suggestionsDiv = document.getElementById("suggestions");
+
+        // Détecter la touche "Entrer"
+        searchInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                rechercherMedicament();
+            }
+        });
+
+        // Afficher les suggestions
+        searchInput.addEventListener("input", function () {
+            const query = searchInput.value.trim().toLowerCase();
+            suggestionsDiv.innerHTML = "";
+            if (query.length > 0) {
+                const filteredMedicaments = medicaments.filter(medicament => medicament.toLowerCase().includes(query));
+                filteredMedicaments.forEach(medicament => {
+                    const suggestionItem = document.createElement("div");
+                    suggestionItem.classList.add("suggestion-item");
+                    suggestionItem.textContent = medicament;
+                    suggestionItem.addEventListener("click", () => {
+                        searchInput.value = medicament;
+                        suggestionsDiv.innerHTML = "";
+                        rechercherMedicament();
+                    });
+                    suggestionsDiv.appendChild(suggestionItem);
+                });
+            }
+        });
+
+        // Fonction de recherche
+        function rechercherMedicament() {
+            let nom = searchInput.value.trim();
+            if (nom === "") {
+                document.getElementById("result").innerHTML = "<p style='color: red;'>Veuillez entrer un nom de médicament.</p>";
+                return;
+            }
+            fetch(`php/recherche.php?nom=${encodeURIComponent(nom)}`)
+                .then(response => response.json())
+                .then(data => {
+                    let resultDiv = document.getElementById("result");
+                    resultDiv.innerHTML = ""; // Réinitialiser l'affichage des résultats
+                    if (data.error) {
+                        resultDiv.innerHTML = `<p style='color: red;'>${data.error}</p>`;
+                    } else {
+                        data.forEach((medicament, index) => {
+                            let pharmacieDiv = document.createElement("div");
+                            pharmacieDiv.classList.add("pharmacie");
+                            pharmacieDiv.style.animationDelay = `${index * 0.2}s`; // Animation en cascade
+                            pharmacieDiv.innerHTML = `
+                                <p><strong>Pharmacie:</strong> ${medicament.pharmacie}</p>
+                                <p><strong>Stock disponible:</strong> ${medicament.stock}</p>
+                                <a href="https://www.google.com/maps?q=${medicament.latitude},${medicament.longitude}" target="_blank">
+                                    <button class="map-button">Voir sur Google Maps</button>
+                                </a>
+                            `;
+                            resultDiv.appendChild(pharmacieDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("result").innerHTML = "<p style='color: red;'>Une erreur est survenue.</p>";
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaTrack - Tableau de Bord Admin</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS - Mise en forme générale */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(90deg, #ff6f61, #6a11cb);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: scale(1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            margin: 10px;
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #6a11cb, #ff6f61);
+            transform: scale(1.05);
+            box-shadow: 0 6px 10px rgba(255, 111, 97, 0.5);
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background: linear-gradient(90deg, #ff6f61, #ff6f61);
+        }
+
+        .error-message {
+            color: #ff0033;
+            background-color: rgba(255, 0, 51, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .stock-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .stock-table th, .stock-table td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .stock-table th {
+            background-color: #f2f2f2;
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            margin-right: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+        }
+
+        .action-buttons button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tableau de Bord Admin</h1>
+
+        <div id="error-message" class="error-message"></div>
+
+        <h2>Ajouter un Médicament</h2>
+        <form id="add-medicament-form">
+            <input type="text" id="medicament-nom" placeholder="Nom du médicament" required>
+            <input type="number" id="medicament-quantite" placeholder="Quantité" required>
+            <input type="number" id="medicament-prix" placeholder="Prix (DT)" step="0.001" required>
+            <button type="submit">Ajouter</button>
+        </form>
+
+        <h2>Stock de Médicaments</h2>
+        <table class="stock-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Quantité</th>
+                    <th>Prix (DT)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="stock-table-body">
+                <!-- Les stocks seront chargés dynamiquement -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStock();
+
+            document.getElementById('add-medicament-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                addMedicament();
+            });
+        });
+
+        function loadStock() {
+            fetch('php/get_stock.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('error-message').innerText = data.error;
+                        document.getElementById('error-message').style.display = 'block';
+                    } else {
+                        let stockTableBody = document.getElementById('stock-table-body');
+                        stockTableBody.innerHTML = '';
+                        data.forEach(item => {
+                            let row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${item.nom}</td>
+                                <td>${item.quantite}</td>
+                                <td>${item.prix}</td>
+                                <td class="action-buttons">
+                                    <button onclick="updateMedicament('${item.nom}')">Modifier</button>
+                                    <button onclick="removeMedicament('${item.nom}')">Supprimer</button>
+                                </td>
+                            `;
+                            stockTableBody.appendChild(row);
+                        });
+                    }
+                });
+        }
+
+        function addMedicament() {
+            let nom = document.getElementById('medicament-nom').value;
+            let quantite = parseInt(document.getElementById('medicament-quantite').value);
+            let prix = parseFloat(document.getElementById('medicament-prix').value);
+
+            fetch('php/add_medicament.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nom: nom, quantite: quantite, prix: prix })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadStock();
+                    document.getElementById('add-medicament-form').reset();
+                } else {
+                    document.getElementById('error-message').innerText = data.error;
+                    document.getElementById('error-message').style.display = 'block';
+                }
+            });
+        }
+
+        function updateMedicament(nom) {
+            let quantite = prompt('Entrez la nouvelle quantité:', '');
+            let prix = prompt('Entrez le nouveau prix (DT):', '');
+
+            if (quantite !== null && prix !== null) {
+                fetch('php/update_medicament.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nom: nom, quantite: parseInt(quantite), prix: parseFloat(prix) })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadStock();
+                    } else {
+                        document.getElementById('error-message').innerText = data.error;
+                        document.getElementById('error-message').style.display = 'block';
+                    }
+                });
+            }
+        }
+
+        function removeMedicament(nom) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce médicament?')) {
+                fetch('php/remove_medicament.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nom: nom })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadStock();
+                    } else {
+                        document.getElementById('error-message').innerText = data.error;
+                        document.getElementById('error-message').style.display = 'block';
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
